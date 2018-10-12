@@ -37,7 +37,12 @@ public class TestCMService {
         TestCMService test = new TestCMService();
         // 获取CI数据
 //        test.getCIByKey(1, 1, CIType.Device, "172.21.16.14_VM1614centos_device_ram0");
-        test.updateCI(9, 1, CIType.Device, "172.21.16.14_VM1614centos_device_ram0");
+        // 获取多条CI数据
+        Map<String,String> filters = new HashMap<>();
+        filters.put("ip", "192.196.1.3");//filters对应着attribute的键值对，全检索时filters赋空或null
+        test.searchCI(9, 1, CIType.Device, filters);
+        // 更新CI数据
+//        test.updateCI(9, 1, CIType.Device, "172.21.16.14_VM1614centos_device_ram0");
         // 创建CI数据
 //        test.createCI(9, 1, CIType.Device, "172.21.16.14_VM1614centos_device_ram0");
 
@@ -53,6 +58,11 @@ public class TestCMService {
     public void getCIByKey(long orgId, long sysId, CIType type, String key) {
         CI ci = CMDBProxy.getCIByKey(orgId, sysId, type, key);
         System.out.print(ci.toString());
+    }
+
+    public void searchCI(long orgId, long sysId, CIType type, Map<String,String> filters) {
+        List<CI> ciList = CMDBProxy.searchCI(orgId, sysId, type, filters);
+        System.out.print(ciList.size());
     }
 
     public void createCI(long orgId, long sysId, CIType type, String key) {
