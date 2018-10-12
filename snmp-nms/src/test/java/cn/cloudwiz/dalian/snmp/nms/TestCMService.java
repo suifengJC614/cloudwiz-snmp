@@ -4,15 +4,14 @@ import com.cloudmon.alert.common.cmdb.CMDBProxy;
 import com.cloudmon.alert.common.http.HttpClient;
 import com.cloudmon.alert.common.http.HttpResult;
 import com.cloudmon.alert.common.opentsdb.OpentsdbProxy;
+import com.cloudmon.common.datamodel.cmdb.Attribute;
 import com.cloudmon.common.datamodel.cmdb.CI;
 import com.cloudmon.common.datamodel.cmdb.CIType;
 import org.apache.commons.codec.binary.Base64;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 public class TestCMService {
 
@@ -38,16 +37,17 @@ public class TestCMService {
         TestCMService test = new TestCMService();
         // 获取CI数据
 //        test.getCIByKey(1, 1, CIType.Device, "172.21.16.14_VM1614centos_device_ram0");
+        test.updateCI(9, 1, CIType.Device, "172.21.16.14_VM1614centos_device_ram0");
         // 创建CI数据
 //        test.createCI(9, 1, CIType.Device, "172.21.16.14_VM1614centos_device_ram0");
 
         // 写OpenTSDb
-        System.out.println("begin tsdb init");
-        OpentsdbProxy.initInstance(properties);
-        // 因为initInstance方法中异步检索token信息，如果不sleep会导致写数据的时候缺少token而失败。实际工程中可在工程启动时init
-        Thread.sleep(5000);
-        System.out.println("writeOpenTsDB");
-        test.writeOpenTsDB(1, 1);
+//        System.out.println("begin tsdb init");
+//        OpentsdbProxy.initInstance(properties);
+//        // 因为initInstance方法中异步检索token信息，如果不sleep会导致写数据的时候缺少token而失败。实际工程中可在工程启动时init
+//        Thread.sleep(5000);
+//        System.out.println("writeOpenTsDB");
+//        test.writeOpenTsDB(1, 1);
     }
 
     public void getCIByKey(long orgId, long sysId, CIType type, String key) {
@@ -66,6 +66,20 @@ public class TestCMService {
         ci.addAttribute("deviceType", "Core Router");
         HttpResult result = CMDBProxy.createCI(orgId, sysId, ci);
         System.out.print(result.toString());
+    }
+
+    public void updateCI(long orgId, long sysId, CIType type, String key) {
+
+        CI ci = CMDBProxy.getCIByKey(orgId, sysId, type, key);
+
+        System.out.print("Updating CI ：" + ci.getId());
+
+        List<Attribute> attributes = new LinkedList<>();
+        attributes.add(new Attribute("devicename", "HP"));
+        attributes.add(new Attribute("ip", "192.196.1.3"));
+        attributes.add(new Attribute("deviceType", "哈哈"));
+
+        CMDBProxy.updateCI(orgId, sysId, ci, attributes);
     }
 
     public void writeOpenTsDB(long orgId, long sysId) {
