@@ -1,0 +1,7 @@
+{
+  "communityRequest": {
+    "version": "VERSION_2C",
+    "address": "192.168.0.101",
+    "community": "public"
+  }
+}

@@ -2,10 +2,10 @@ package cn.cloudwiz.dalian.snmp.api.nms;
 
 import java.util.List;
 
-public interface SnmpRequest {
+public interface SnmpDevice {
 
     public String getAddress();
 
-    public List<String> getOids();
+    public SnmpVersion getVersion();
 
 }

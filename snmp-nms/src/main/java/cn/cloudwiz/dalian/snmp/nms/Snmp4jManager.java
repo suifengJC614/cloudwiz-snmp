@@ -1,6 +1,8 @@
 package cn.cloudwiz.dalian.snmp.nms;
 
-import cn.cloudwiz.dalian.snmp.api.nms.SnmpManager;
+import cn.cloudwiz.dalian.snmp.api.nms.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.snmp4j.*;
 import org.snmp4j.event.ResponseEvent;
 import org.snmp4j.mp.MPv3;
@@ -9,168 +11,186 @@ import org.snmp4j.security.*;
 import org.snmp4j.smi.*;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
+import scala.util.parsing.combinator.testing.Str;
 
 import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class Snmp4jManager implements SnmpManager {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(Snmp4jManager.class);
+
     private static final String ADDRESS_TEMPLATE = "udp:%s/161";
 
-    public void get() throws IOException {
-        String ip = "192.168.0.101";
-        int version = SnmpConstants.version2c;
-        String community = "public";
-        String[] oids = {
-                "1.3.6.1.2.1.1.1.0",
-                "1.3.6.1.2.1.1.2.0",
-                "1.3.6.1.2.1.1.5.0"
-        };
+    @Override
+    public Map<String, String> get(SnmpDevice device, List<String> oids) throws IOException {
+        Snmp snmp = null;
+        try {
+            snmp = createSnmp(device);
+            Target target = createTarget(device);
+            target.setAddress(GenericAddress.parse(String.format(ADDRESS_TEMPLATE, device.getAddress())));
+            target.setRetries(5);
+            target.setTimeout(1000);
 
-        String userName = "";
+            PDU pdu = createPDU(device.getVersion());
+            oids.parallelStream().forEach(oid -> {
+                pdu.add(new VariableBinding(new OID(oid)));
+            });
+            pdu.setType(PDU.GET);
 
-
-        TransportMapping transport = new DefaultUdpTransportMapping();
-        Snmp snmp = new Snmp(transport);
-        if (version == SnmpConstants.version3) {
-            USM usm = new USM(SecurityProtocols.getInstance(), new OctetString(MPv3.createLocalEngineID()), 0);
-            SecurityModels.getInstance().addSecurityModel(usm);
+            ResponseEvent responseEvent = snmp.send(pdu, target);
+            Address peerAddress = responseEvent.getPeerAddress();
+            PDU response = responseEvent.getResponse();
+            return response.getVariableBindings().stream().collect(Collectors.toMap(
+                    item -> item.getOid().toDottedString(),
+                    item -> item.getVariable().toString()
+            ));
+        } finally {
+            if (snmp != null) {
+                snmp.close();
+            }
         }
-        snmp.listen();
-
-        Address address = GenericAddress.parse(String.format(ADDRESS_TEMPLATE, ip));
-
-        Target target = null;
-        if (version == SnmpConstants.version3) {
-            OctetString securityName = new OctetString(userName);
-            OctetString pwd = new OctetString("MD5DESUserAuthPassword");
-            OctetString privpwd = new OctetString("MD5DESUserPrivPassword");
-            UsmUser usmUser = new UsmUser(securityName, AuthMD5.ID, pwd, PrivDES.ID, privpwd);
-            snmp.getUSM().addUser(securityName, usmUser);
-            UserTarget userTarget = new UserTarget();
-            userTarget.setSecurityLevel(SecurityLevel.AUTH_PRIV);
-            userTarget.setSecurityName(usmUser.getSecurityName());
-            target = userTarget;
-        } else {
-            CommunityTarget communityTarget = new CommunityTarget();
-            communityTarget.setCommunity(new OctetString(community));
-            target = communityTarget;
-        }
-
-        target.setVersion(version);
-        target.setAddress(address);
-        target.setRetries(5);
-        target.setTimeout(1000);
-
-
-        PDU pdu = new PDU();
-        for (String oid : oids) {
-            pdu.add(new VariableBinding(new OID(oid)));
-        }
-        pdu.setType(PDU.GET);
-
-        ResponseEvent responseEvent = snmp.send(pdu, target);
-        Address peerAddress = responseEvent.getPeerAddress();
-        PDU response = responseEvent.getResponse();
-        System.out.println(peerAddress);
-        response.getVariableBindings().stream().forEach(item -> {
-            System.out.println(String.format("%s = %s", ((VariableBinding) item).getOid(), ((VariableBinding) item).getVariable()));
-        });
-
     }
 
-    public void walk() throws IOException {
-        String ip = "192.168.0.101";
-        int version = SnmpConstants.version2c;
-        String community = "public";
-        String[] oids = {
-                "1.3.6.1.2.1.1",
-                "1.3.6.1.2.1.2"
-        };
 
-        TransportMapping transport = new DefaultUdpTransportMapping();
-        Snmp snmp = new Snmp(transport);
-        if (version == SnmpConstants.version3) {
-            USM usm = new USM(SecurityProtocols.getInstance(), new OctetString(MPv3.createLocalEngineID()), 0);
-            SecurityModels.getInstance().addSecurityModel(usm);
-        }
-        transport.listen();
+    @Override
+    public Map<String, String> walk(SnmpDevice device, List<String> oids) throws IOException {
+        Snmp snmp = null;
+        try {
+            snmp = createSnmp(device);
 
-        Address address = GenericAddress.parse(String.format(ADDRESS_TEMPLATE, ip));
+            Target target = createTarget(device);
+            target.setAddress(GenericAddress.parse(String.format(ADDRESS_TEMPLATE, device.getAddress())));
+            target.setRetries(5);
+            target.setTimeout(1000);
 
-        Target target = null;
-        if (version == SnmpConstants.version3) {
-            OctetString securityName = new OctetString("MD5DES");
-            OctetString pwd = new OctetString("MD5DESUserAuthPassword");
-            OctetString privpwd = new OctetString("MD5DESUserPrivPassword");
-            snmp.getUSM().addUser(securityName, new UsmUser(securityName, AuthMD5.ID, pwd, PrivDES.ID, privpwd));
-            UserTarget userTarget = new UserTarget();
-            userTarget.setSecurityLevel(SecurityLevel.AUTH_PRIV);
-            userTarget.setSecurityName(securityName);
-            target = userTarget;
-        } else {
-            CommunityTarget communityTarget = new CommunityTarget();
-            communityTarget.setCommunity(new OctetString(community));
-            target = communityTarget;
-        }
+            Map<String, String> result = new HashMap<>();
+            for (String oid : oids) {
+                PDU pdu = createPDU(device.getVersion());
+                OID targetOID = new OID(oid);
+                pdu.add(new VariableBinding(targetOID));
 
-        target.setVersion(version);
-        target.setAddress(address);
-        target.setRetries(5);
-        target.setTimeout(1000);
-
-
-        for (String oid : oids) {
-            PDU pdu = new PDU();
-            OID targetOID = new OID(oid);
-            pdu.add(new VariableBinding(targetOID));
-
-            while (true) {
                 ResponseEvent respEvent = snmp.getNext(pdu, target);
                 PDU response = respEvent.getResponse();
-                if (response == null) {
-                    break;
-                } else {
+
+                while ((response = snmp.getNext(pdu, target).getResponse()) != null) {
+                    if (response.size() == 0) {
+                        break;
+                    }
                     VariableBinding vb = response.get(0);
-                    System.out.println(String.format("%s = %s", vb.getOid(), vb.getVariable()));
+                    result.put(vb.getOid().toString(), vb.getVariable().toString());
                     if (checkWalkFinished(targetOID, pdu, vb)) {
                         break;
                     }
-                    pdu.setRequestID(new Integer32(0));
-                    pdu.set(0, vb);
+                    pdu.clear();
+                    pdu.add(vb);
                 }
-
+            }
+            return result;
+        } finally {
+            if (snmp != null) {
+                snmp.close();
             }
         }
-
-        System.out.println("==============snmp end================");
-        snmp.close();
     }
 
     private boolean checkWalkFinished(OID targetOID, PDU pdu, VariableBinding vb) {
         boolean finished = false;
         if (pdu.getErrorStatus() != 0) {
-            System.out.println("[true] responsePDU.getErrorStatus() != 0 ");
-            System.out.println(pdu.getErrorStatusText());
-            finished = true;
+            LOGGER.warn(String.format("snmp walk pdu error: %s", pdu.getErrorStatusText()));
+            return true;
         } else if (vb.getOid() == null) {
-            System.out.println("[true] vb.getOid() == null");
-            finished = true;
+            LOGGER.debug("snmp walk finished. vb.getOid() == null");
+            return true;
         } else if (vb.getOid().size() < targetOID.size()) {
-            System.out.println("[true] vb.getOid().size() < targetOID.size()");
-            finished = true;
+            LOGGER.debug("snmp walk finished. vb.getOid().size() < targetOID.size()");
+            return true;
         } else if (targetOID.leftMostCompare(targetOID.size(), vb.getOid()) != 0) {
-            System.out.println("[true] targetOID.leftMostCompare() != 0");
-            finished = true;
+            LOGGER.debug("snmp walk finished. targetOID.leftMostCompare() != 0");
+            return true;
         } else if (Null.isExceptionSyntax(vb.getVariable().getSyntax())) {
-            System.out.println("[true] Null.isExceptionSyntax(vb.getVariable().getSyntax())");
-            finished = true;
+            LOGGER.debug("snmp walk finished. Null.isExceptionSyntax(vb.getVariable().getSyntax())");
+            return true;
         } else if (vb.getOid().compareTo(targetOID) <= 0) {
-            System.out.println("[true] Variable received is not " + "lexicographic successor of requested " + "one:");
-            System.out.println(vb.toString() + " <= " + targetOID);
-            finished = true;
+            LOGGER.debug(String.format("snmp walk finished. Variable received is not lexicographic successor of requested one: %s <= %s",
+                    vb, targetOID));
+            return true;
         }
-        return finished;
+        return false;
+    }
+
+    protected Snmp createSnmp(SnmpDevice device) throws IOException {
+        TransportMapping transport = new DefaultUdpTransportMapping();
+        Snmp snmp = new Snmp(transport);
+        if (Objects.equals(device.getVersion(), SnmpVersion.VERSION_3)) {
+            Assert.isTrue(device instanceof SecurityDevice, "SNMPv3 device type must be SecurityDevice");
+            SecurityDevice securityDevice = (SecurityDevice) device;
+
+            OctetString securityName = new OctetString(securityDevice.getSecurityName());
+            OID authType = parseAuthType(securityDevice.getAuthType());
+            OctetString authpwd = new OctetString(securityDevice.getAuthPassphrase());
+            OID privacyType = parsePrivacyType(securityDevice.getPrivacyType());
+            OctetString privacypwd = new OctetString(securityDevice.getPrivacyPassphrase());
+            UsmUser usmUser = new UsmUser(securityName, authType, authpwd, privacyType, privacypwd);
+            USM usm = new USM(SecurityProtocols.getInstance(), new OctetString(MPv3.createLocalEngineID()), 0);
+            usm.addUser(usmUser);
+            SecurityModels.getInstance().addSecurityModel(usm);
+        }
+        snmp.listen();
+        return snmp;
+    }
+
+    protected Target createTarget(SnmpDevice device) {
+        if (Objects.equals(device.getVersion(), SnmpVersion.VERSION_3)) {
+            Assert.isTrue(device instanceof SecurityDevice, "SNMPv3 device type must be SecurityDevice");
+            SecurityDevice securityDevice = (SecurityDevice) device;
+            UserTarget userTarget = new UserTarget();
+            userTarget.setSecurityLevel(SecurityLevel.AUTH_PRIV);
+            userTarget.setSecurityName(new OctetString(securityDevice.getSecurityName()));
+            userTarget.setVersion(parseVersion(device.getVersion()));
+            return userTarget;
+        } else {
+            CommunityTarget communityTarget = new CommunityTarget();
+            if (device instanceof CommunityDevice) {
+                String community = ((CommunityDevice) device).getCommunity();
+                communityTarget.setCommunity(new OctetString(community));
+            }
+            return communityTarget;
+        }
+    }
+
+    protected PDU createPDU(SnmpVersion version) {
+        PDU result;
+        if (Objects.equals(version, SnmpVersion.VERSION_3)) {
+            result = new ScopedPDU();
+        } else {
+            result = new PDUv1();
+        }
+        return result;
+    }
+
+    private int parseVersion(SnmpVersion version) {
+        switch (version) {
+            case VERSION_1:
+                return SnmpConstants.version1;
+            case VERSION_2C:
+                return SnmpConstants.version2c;
+            case VERSION_3:
+                return SnmpConstants.version3;
+            default:
+                return SnmpConstants.version2c;
+        }
+    }
+
+    private OID parseAuthType(AuthType authType) {
+        return AuthMD5.ID;
+    }
+
+    private OID parsePrivacyType(PrivacyType privacyType) {
+        return PrivDES.ID;
     }
 
 
