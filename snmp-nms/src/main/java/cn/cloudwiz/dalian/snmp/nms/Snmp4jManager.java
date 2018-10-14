@@ -12,7 +12,6 @@ import org.snmp4j.smi.*;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
-import scala.util.parsing.combinator.testing.Str;
 
 import java.io.IOException;
 import java.util.*;

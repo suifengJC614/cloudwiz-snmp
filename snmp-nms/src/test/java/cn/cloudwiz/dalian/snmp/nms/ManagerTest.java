@@ -35,7 +35,7 @@ public class ManagerTest {
     @Test
     public void snmpGet() throws IOException {
         TestData testData = proxyFactory.createProjection(TestData.class, testJson.getInputStream());
-        CommunityDevice device = testData.getCommunityRequest();
+        CommunityDevice device = testData.getCommunityDevice();
         List<String> oids = Arrays.asList(
                 "1.3.6.1.2.1.1.1.0",
                 "1.3.6.1.2.1.1.2.0",
@@ -51,7 +51,7 @@ public class ManagerTest {
     @Test
     public void snmpWalk() throws IOException {
         TestData testData = proxyFactory.createProjection(TestData.class, testJson.getInputStream());
-        CommunityDevice device = testData.getCommunityRequest();
+        CommunityDevice device = testData.getCommunityDevice();
         List<String> oids = Arrays.asList(
                 "1.3.6.1.2.1.1",
                 "1.3.6.1.2.1.2"
@@ -64,7 +64,7 @@ public class ManagerTest {
 
     public interface TestData {
 
-        public CommunityDevice getCommunityRequest();
+        public CommunityDevice getCommunityDevice();
 
     }
 

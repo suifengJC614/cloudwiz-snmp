@@ -1,0 +1,24 @@
+#spring:
+#  datasource:
+#    driver-class-name: com.mysql.jdbc.Driver
+#    username: root
+#    password: 123456
+#    url: jdbc:mysql://127.0.0.1:3306/clondwiz_billing?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC&useSSL=true&allowMultiQueries=true
+
+logging:
+  level:
+    com.clondwiz.dalian.snmp: info
+
+server:
+  port: 8090
+
+swagger:
+  enable: true
+
+nms:
+  cmdb-path: http://123.206.91.96:8080/_cmdb
+  tsdb-path: http://123.206.91.96:8080/_tsdb
+  token:
+    username: CloudInsight
+    password: Cloud
+    url: jdbc:mysql://123.206.91.96:3308/grafana
