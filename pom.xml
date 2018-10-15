@@ -24,6 +24,7 @@
         <module>snmp-web</module>
         <module>snmp-nms</module>
         <module>snmp-device</module>
+        <module>snmp-exporter</module>
     </modules>
 
     <dependencyManagement>

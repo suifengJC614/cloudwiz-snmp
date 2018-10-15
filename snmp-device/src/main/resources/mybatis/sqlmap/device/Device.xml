@@ -38,7 +38,7 @@
         <include refid="Columns">
             <property name="alias" value="smd"/>
         </include>
-        FROM snmp_monitor_device sdb
+        FROM snmp_monitor_device smd
         WHERE smd.smd_id = #{key}
     </select>
 
@@ -57,7 +57,7 @@
         </trim>
         <trim prefix="values(" suffix=")" suffixOverrides=",">
             #{brandKey,jdbcType=INTEGER},
-            #{address,jdbcType=VARCHAR}
+            #{address,jdbcType=VARCHAR},
             <if test="exporterName != null">#{exporterName,jdbcType=VARCHAR},</if>
             <if test="deviceName != null">#{deviceName,jdbcType=VARCHAR},</if>
             <if test="model != null">#{model,jdbcType=VARCHAR},</if>
@@ -78,13 +78,13 @@
             <if test="deviceType != null">smd_type=#{deviceType,typeHandler=EnumIntegerCodeTypeHandler},</if>
             <if test="port != null">smd_port=#{port,jdbcType=INTEGER},</if>
             <if test="version != null">smd_version=#{version,typeHandler=EnumIntegerCodeTypeHandler},</if>
-            <if test="properties != null">#smd_properties={properties,typeHandler=JsonTypeHandler},</if>
+            <if test="properties != null">smd_properties=#{properties,typeHandler=JsonTypeHandler},</if>
         </set>
         WHERE smd_id = #{primaryKey}
     </update>
 
     <delete id="delete">
-        DELETE FROM snmp_monitor_device WHERE sdb_id = #{key}
+        DELETE FROM snmp_monitor_device WHERE smd_id = #{key}
     </delete>
 
 </mapper>

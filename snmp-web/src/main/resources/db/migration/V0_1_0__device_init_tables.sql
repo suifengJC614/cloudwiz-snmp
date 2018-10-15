@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS snmp_monitor_items(
   smi_update_time DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (smi_id),
   INDEX (smi_sdb_id),
-  INDEX (smi_sei_id)
+  INDEX (smd_sei_name)
 )ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8 COMMENT '监控项表';
 
 -- ------------------------------

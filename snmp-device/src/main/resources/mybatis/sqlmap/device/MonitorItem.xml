@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.cloudwiz.dalian.snmp.device.dao.MonitorItemDao">
+
+    <sql id="Columns">
+        ${alias}.smi_id,
+        ${alias}.smi_sdb_id,
+        ${alias}.smd_sei_name,
+        ${alias}.smi_oid,
+        ${alias}.smi_key,
+        ${alias}.smi_value_unit,
+        ${alias}.smi_value_type,
+        ${alias}.smi_create_time,
+        ${alias}.smi_update_time
+    </sql>
+
+    <resultMap id="Result" type="MonitorItemEntity">
+        <id column="smi_id" property="primaryKey"/>
+        <result column="smi_sdb_id" property="brandKey"/>
+        <result column="smd_sei_name" property="exporterName"/>
+        <result column="smi_oid" property="oid"/>
+        <result column="smi_key" property="saveKey"/>
+        <result column="smi_value_unit" property="valueUnit"/>
+        <result column="smi_value_type" property="valueType" typeHandler="EnumIntegerCodeTypeHandler"/>
+        <result column="smi_create_time" property="createTime"/>
+        <result column="smi_update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="getEntityByKey" resultMap="Result">
+        SELECT
+        <include refid="Columns">
+            <property name="alias" value="smi"/>
+        </include>
+        FROM snmp_monitor_items smi
+        WHERE smi.smi_id = #{key}
+    </select>
+
+    <select id="getListByBrand" resultMap="Result">
+        SELECT
+        <include refid="Columns">
+            <property name="alias" value="smi"/>
+        </include>
+        FROM snmp_monitor_items smi
+        WHERE smi.smi_sdb_id = #{brandKey}
+    </select>
+
+    <insert id="insert" parameterType="MonitorItemEntity" useGeneratedKeys="true" keyProperty="primaryKey">
+        INSERT INTO snmp_monitor_items
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            smi_sdb_id,
+            smi_oid,
+            smi_key,
+            <if test="exporterName != null">smd_sei_name,</if>
+            <if test="valueUnit != null">smi_value_unit,</if>
+            <if test="valueType != null">smi_value_type,</if>
+        </trim>
+        <trim prefix="values(" suffix=")" suffixOverrides=",">
+            #{brandKey,jdbcType=INTEGER},
+            #{oid,jdbcType=VARCHAR},
+            #{saveKey,jdbcType=VARCHAR},
+            <if test="exporterName != null">#{exporterName,jdbcType=VARCHAR},</if>
+            <if test="valueUnit != null">#{valueUnit,jdbcType=VARCHAR},</if>
+            <if test="valueType != null">#{valueType,typeHandler=EnumIntegerCodeTypeHandler},</if>
+        </trim>
+    </insert>
+
+    <update id="update" parameterType="MonitorItemEntity">
+        UPDATE snmp_monitor_items
+        <set>
+            <if test="oid != null">smi_oid=#{oid,jdbcType=VARCHAR},</if>
+            <if test="saveKey != null">smi_key=#{saveKey,jdbcType=VARCHAR},</if>
+            <if test="exporterName != null">smd_sei_name=#{exporterName,jdbcType=VARCHAR},</if>
+            <if test="valueUnit != null">smi_value_unit=#{valueUnit,jdbcType=VARCHAR},</if>
+            <if test="valueType != null">smi_value_type=#{valueType,typeHandler=EnumIntegerCodeTypeHandler},</if>
+        </set>
+        WHERE smi_id = #{primaryKey}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM snmp_monitor_items WHERE smi_id = #{key}
+    </delete>
+
+</mapper>

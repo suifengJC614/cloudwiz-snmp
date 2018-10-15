@@ -4,5 +4,26 @@
     "brandName": "思科",
     "description": "网络解决方案供应商",
     "classifications": ["NETWORK", "FIREWALL", "SERVER"]
+  },
+  "monitorDevice": {
+    "key": 1,
+    "deviceBrand": 1,
+    "exporterName": "exporter_xxxx",
+    "deviceName": "设备名称",
+    "deviceType": "CORE_SWITCH",
+    "model": "cisco_xxxx",
+    "address": "192.168.0.101",
+    "port": "161",
+    "version": "VERSION_2C",
+    "community": "public"
+  },
+  "monitorItem": {
+    "key": 1,
+    "deviceBrand": 1,
+    "exporterName": "exporter_xxxx",
+    "oid": "1.3.6.1.2.1.1.5.0",
+    "saveKey": "net.if.out.errors",
+    "valueUnit": "值单位",
+    "valueType": "TEXT",
   }
 }

@@ -1,0 +1,3 @@
+logging:
+  level:
+    cn.cloudwiz.dalian.snmp: debug

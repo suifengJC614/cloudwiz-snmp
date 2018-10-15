@@ -10,6 +10,6 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableProjection
 @EnableAutoConfiguration
 @EnableTransactionManagement
-@ComponentScan(basePackageClasses = TestConfiguration.class)
+@ComponentScan(basePackages = "cn.cloudwiz.dalian.snmp")
 public class TestConfiguration {
 }

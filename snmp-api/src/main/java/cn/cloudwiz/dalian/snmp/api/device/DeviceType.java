@@ -30,6 +30,6 @@ public enum DeviceType implements EnumItem<String>, EnumType<Integer> {
 
     @Override
     public Integer getJdbcValue() {
-        return null;
+        return code;
     }
 }
