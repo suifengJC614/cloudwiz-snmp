@@ -7,13 +7,12 @@ spring:
 
 logging:
   level:
-    cn.cloudwiz.dalian.snmp: info
+    cn.cloudwiz.dalian.snmp: debug
 
-server:
-  port: 8090
+mybatis:
+  mapper-locations: classpath:mybatis/sqlmap/device/*.xml
+  type-aliases-package: cn.cloudwiz.dalian.snmp,cn.cloudwiz.dalian.commons.core.orm.mybatis
 
-swagger:
-  enable: true
 
 device:
   logo-root: E:/Store/TempLibrary/snmp

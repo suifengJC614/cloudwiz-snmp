@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.cloudwiz.dalian.snmp.device.dao.DeviceBrandDao">
+
+    <sql id="Columns">
+        ${alias}.sdb_id,
+        ${alias}.sdb_name,
+        ${alias}.sdb_description,
+        ${alias}.sdb_logo,
+        ${alias}.sdb_classify,
+        ${alias}.sdb_disable,
+        ${alias}.sdb_create_time,
+        ${alias}.sdb_update_time
+    </sql>
+
+    <resultMap id="Result" type="BrandEntity">
+        <id column="sdb_id" property="primaryKey"/>
+        <result column="sdb_name" property="brandName"/>
+        <result column="sdb_description" property="description"/>
+        <result column="sdb_logo" property="logoImage"/>
+        <result column="sdb_classify" property="classifications" javaType="DeviceClass" typeHandler="EnumBitCodeTypeHandler"/>
+        <result column="sdb_disable" property="disable" javaType="boolean"/>
+        <result column="sdb_create_time" property="createTime"/>
+        <result column="sdb_update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="getEntityByKey" resultMap="Result">
+        SELECT
+        <include refid="Columns">
+            <property name="alias" value="sdb"/>
+        </include>
+        FROM snmp_device_brand sdb
+        WHERE sdb.sdb_id = #{key}
+    </select>
+
+    <select id="getListByClassify" resultMap="Result">
+        SELECT
+        <include refid="Columns">
+            <property name="alias" value="sdb"/>
+        </include>
+        FROM snmp_device_brand sdb
+        <if test="classify != null">
+            WHERE sdb.sdb_classify <![CDATA[&]]> #{classify.jdbcValue} = #{classify.jdbcValue}
+        </if>
+    </select>
+
+    <insert id="insert" parameterType="BrandEntity" useGeneratedKeys="true" keyProperty="primaryKey">
+        INSERT INTO snmp_device_brand
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            sdb_name,
+            <if test="description != null">sdb_description,</if>
+            <if test="logoImage != null">sdb_logo,</if>
+            <if test="classifications != null">sdb_classify,</if>
+        </trim>
+        <trim prefix="values(" suffix=")" suffixOverrides=",">
+            #{brandName,jdbcType=VARCHAR},
+            <if test="description != null">#{description,jdbcType=VARCHAR},</if>
+            <if test="logoImage != null">#{logoImage,jdbcType=VARCHAR},</if>
+            <if test="classifications != null">#{classifications,javaType=DeviceClass,typeHandler=EnumBitCodeTypeHandler},</if>
+        </trim>
+    </insert>
+
+    <update id="update" parameterType="BrandEntity">
+        UPDATE snmp_device_brand
+        <set>
+            <if test="brandName != null">sdb_name=#{brandName,jdbcType=VARCHAR},</if>
+            <if test="description != null">sdb_description=#{description,jdbcType=VARCHAR},</if>
+            <if test="disable != null">sdb_disable=#{disable,jdbcType=INTEGER},</if>
+            <choose>
+                <when test="logoImage != null">sdb_logo=#{logoImage,jdbcType=VARCHAR},</when>
+                <otherwise>sdb_logo=NULL</otherwise>
+            </choose>
+            <if test="classifications != null">sdb_classify=#{classifications,javaType=DeviceClass,typeHandler=EnumBitCodeTypeHandler},</if>
+        </set>
+        WHERE sdb_id = #{primaryKey}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM snmp_device_brand WHERE sdb_id = #{key}
+    </delete>
+
+</mapper>

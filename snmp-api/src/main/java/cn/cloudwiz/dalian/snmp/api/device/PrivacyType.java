@@ -1,4 +1,4 @@
-package cn.cloudwiz.dalian.snmp.api.nms;
+package cn.cloudwiz.dalian.snmp.api.device;
 
 import cn.cloudwiz.dalian.snmp.api.EnumItem;
 

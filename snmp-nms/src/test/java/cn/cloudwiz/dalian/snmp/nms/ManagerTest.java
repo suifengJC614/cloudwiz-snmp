@@ -1,7 +1,6 @@
 package cn.cloudwiz.dalian.snmp.nms;
 
-import cn.cloudwiz.dalian.commons.utils.JsonUtils;
-import cn.cloudwiz.dalian.snmp.api.nms.CommunityDevice;
+import cn.cloudwiz.dalian.snmp.api.device.CommunityDevice;
 import cn.cloudwiz.dalian.snmp.api.nms.SnmpManager;
 import org.junit.Ignore;
 import org.junit.Test;

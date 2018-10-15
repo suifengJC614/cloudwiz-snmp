@@ -6,13 +6,10 @@ server:
   servlet:
     context-path: /snmp/api
 
-#mybatis:
-#  mapper-locations:
-#    - classpath:mybatis/sqlmap/fetch/*.xml
-#    - classpath:mybatis/sqlmap/reports/*.xml
-#    - classpath:mybatis/sqlmap/user/*.xml
-#    - classpath:mybatis/sqlmap/system/*.xml
-#  type-aliases-package: com.clondwiz.billing,org.chaosoft.framework.core.orm.mybatis
+mybatis:
+  mapper-locations:
+    - classpath:mybatis/sqlmap/device/*.xml
+  type-aliases-package: cn.cloudwiz.dalian.snmp,cn.cloudwiz.dalian.commons.core.orm.mybatis
 
 
 

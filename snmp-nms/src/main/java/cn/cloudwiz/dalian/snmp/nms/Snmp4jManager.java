@@ -1,5 +1,6 @@
 package cn.cloudwiz.dalian.snmp.nms;
 
+import cn.cloudwiz.dalian.snmp.api.device.*;
 import cn.cloudwiz.dalian.snmp.api.nms.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +26,7 @@ public class Snmp4jManager implements SnmpManager {
     private static final String ADDRESS_TEMPLATE = "udp:%s/161";
 
     @Override
-    public Map<String, String> get(SnmpDevice device, List<String> oids) throws IOException {
+    public Map<String, String> get(MonitorDevice device, List<String> oids) throws IOException {
         Snmp snmp = null;
         try {
             snmp = createSnmp(device);
@@ -56,7 +57,7 @@ public class Snmp4jManager implements SnmpManager {
 
 
     @Override
-    public Map<String, String> walk(SnmpDevice device, List<String> oids) throws IOException {
+    public Map<String, String> walk(MonitorDevice device, List<String> oids) throws IOException {
         Snmp snmp = null;
         try {
             snmp = createSnmp(device);
@@ -121,7 +122,7 @@ public class Snmp4jManager implements SnmpManager {
         return false;
     }
 
-    protected Snmp createSnmp(SnmpDevice device) throws IOException {
+    protected Snmp createSnmp(MonitorDevice device) throws IOException {
         TransportMapping transport = new DefaultUdpTransportMapping();
         Snmp snmp = new Snmp(transport);
         if (Objects.equals(device.getVersion(), SnmpVersion.VERSION_3)) {
@@ -142,7 +143,7 @@ public class Snmp4jManager implements SnmpManager {
         return snmp;
     }
 
-    protected Target createTarget(SnmpDevice device) {
+    protected Target createTarget(MonitorDevice device) {
         if (Objects.equals(device.getVersion(), SnmpVersion.VERSION_3)) {
             Assert.isTrue(device instanceof SecurityDevice, "SNMPv3 device type must be SecurityDevice");
             SecurityDevice securityDevice = (SecurityDevice) device;

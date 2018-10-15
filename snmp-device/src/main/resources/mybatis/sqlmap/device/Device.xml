@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.cloudwiz.dalian.snmp.device.dao.DeviceDao">
+
+    <sql id="Columns">
+        ${alias}.smd_id,
+        ${alias}.smd_sdb_id,
+        ${alias}.smd_sei_name,
+        ${alias}.smd_name,
+        ${alias}.smd_model_number,
+        ${alias}.smd_type,
+        ${alias}.smd_address,
+        ${alias}.smd_port,
+        ${alias}.smd_version,
+        ${alias}.smd_properties,
+        ${alias}.smd_create_time,
+        ${alias}.smd_update_time
+    </sql>
+
+    <resultMap id="Result" type="DeviceEntity">
+        <id column="smd_id" property="primaryKey"/>
+        <result column="smd_sdb_id" property="brandKey"/>
+        <result column="smd_sei_name" property="exporterName"/>
+        <result column="smd_name" property="deviceName"/>
+        <result column="smd_model_number" property="model" />
+        <result column="smd_type" property="deviceType" typeHandler="EnumIntegerCodeTypeHandler"/>
+        <result column="smd_address" property="address" />
+        <result column="smd_port" property="port" />
+        <result column="smd_version" property="version" typeHandler="EnumIntegerCodeTypeHandler"/>
+        <result column="smd_properties" property="properties" typeHandler="JsonTypeHandler"/>
+        <result column="smd_create_time" property="createTime"/>
+        <result column="smd_update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="getEntityByKey" resultMap="Result">
+        SELECT
+        <include refid="Columns">
+            <property name="alias" value="smd"/>
+        </include>
+        FROM snmp_monitor_device sdb
+        WHERE smd.smd_id = #{key}
+    </select>
+
+    <insert id="insert" parameterType="DeviceEntity" useGeneratedKeys="true" keyProperty="primaryKey">
+        INSERT INTO snmp_monitor_device
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            smd_sdb_id,
+            smd_address,
+            <if test="exporterName != null">smd_sei_name,</if>
+            <if test="deviceName != null">smd_name,</if>
+            <if test="model != null">smd_model_number,</if>
+            <if test="deviceType != null">smd_type,</if>
+            <if test="port != null">smd_port,</if>
+            <if test="version != null">smd_version,</if>
+            <if test="properties != null">smd_properties,</if>
+        </trim>
+        <trim prefix="values(" suffix=")" suffixOverrides=",">
+            #{brandKey,jdbcType=INTEGER},
+            #{address,jdbcType=VARCHAR}
+            <if test="exporterName != null">#{exporterName,jdbcType=VARCHAR},</if>
+            <if test="deviceName != null">#{deviceName,jdbcType=VARCHAR},</if>
+            <if test="model != null">#{model,jdbcType=VARCHAR},</if>
+            <if test="deviceType != null">#{deviceType,typeHandler=EnumIntegerCodeTypeHandler},</if>
+            <if test="port != null">#{port,jdbcType=INTEGER},</if>
+            <if test="version != null">#{version,typeHandler=EnumIntegerCodeTypeHandler},</if>
+            <if test="properties != null">#{properties,typeHandler=JsonTypeHandler},</if>
+        </trim>
+    </insert>
+
+    <update id="update" parameterType="DeviceEntity">
+        UPDATE snmp_monitor_device
+        <set>
+            <if test="address != null">smd_address=#{address,jdbcType=VARCHAR},</if>
+            <if test="exporterName != null">smd_sei_name=#{exporterName,jdbcType=VARCHAR},</if>
+            <if test="deviceName != null">smd_name=#{deviceName,jdbcType=VARCHAR},</if>
+            <if test="model != null">smd_model_number=#{model,jdbcType=VARCHAR},</if>
+            <if test="deviceType != null">smd_type=#{deviceType,typeHandler=EnumIntegerCodeTypeHandler},</if>
+            <if test="port != null">smd_port=#{port,jdbcType=INTEGER},</if>
+            <if test="version != null">smd_version=#{version,typeHandler=EnumIntegerCodeTypeHandler},</if>
+            <if test="properties != null">#smd_properties={properties,typeHandler=JsonTypeHandler},</if>
+        </set>
+        WHERE smd_id = #{primaryKey}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM snmp_monitor_device WHERE sdb_id = #{key}
+    </delete>
+
+</mapper>

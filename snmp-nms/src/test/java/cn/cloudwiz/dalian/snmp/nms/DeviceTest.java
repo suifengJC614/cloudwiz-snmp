@@ -1,7 +1,7 @@
 package cn.cloudwiz.dalian.snmp.nms;
 
-import cn.cloudwiz.dalian.snmp.api.nms.CommunityDevice;
-import cn.cloudwiz.dalian.snmp.api.nms.SnmpDeviceService;
+import cn.cloudwiz.dalian.snmp.api.device.CommunityDevice;
+import cn.cloudwiz.dalian.snmp.api.device.DeviceService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +20,7 @@ import java.io.IOException;
 public class DeviceTest {
 
     @Autowired
-    private SnmpDeviceService devicebs;
+    private DeviceService devicebs;
     @Autowired
     private ProjectionFactory proxyFactory;
     @Value("classpath:test_data.json")
@@ -30,7 +30,6 @@ public class DeviceTest {
     public void createDevice() throws IOException {
         TestData testData = proxyFactory.createProjection(TestData.class, testJson.getInputStream());
         CommunityDevice device = testData.getCommunityDevice();
-        devicebs.createMonitorDevice(device);
     }
 
     public interface TestData {

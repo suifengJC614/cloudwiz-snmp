@@ -1,0 +1,8 @@
+{
+  "deviceBrand": {
+    "key": 1,
+    "brandName": "思科",
+    "description": "网络解决方案供应商",
+    "classifications": ["NETWORK", "FIREWALL", "SERVER"]
+  }
+}

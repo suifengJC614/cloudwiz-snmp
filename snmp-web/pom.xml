@@ -18,7 +18,7 @@
         </dependency>
         <dependency>
             <groupId>cn.cloudwiz.dalian.snmp</groupId>
-            <artifactId>snmp-nms</artifactId>
+            <artifactId>snmp-device</artifactId>
         </dependency>
 
         <dependency>
