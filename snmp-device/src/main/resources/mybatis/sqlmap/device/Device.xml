@@ -18,6 +18,18 @@
         ${alias}.smd_update_time
     </sql>
 
+    <sql id="Params">
+        <where>
+            <if test="params.exporterName != null">
+                AND ${smdAlias}.smd_sei_name LIKE CONCAT('%',#{params.exporterName},'%')
+            </if>
+            <if test="params.deviceName != null">
+                AND ${smdAlias}.smd_name LIKE CONCAT('%',#{params.deviceName},'%')
+            </if>
+            <if test="params.brandKey != null">AND ${smdAlias}.smd_sdb_id = #{params.brandKey}</if>
+        </where>
+    </sql>
+
     <resultMap id="Result" type="DeviceEntity">
         <id column="smd_id" property="primaryKey"/>
         <result column="smd_sdb_id" property="brandKey"/>
@@ -31,15 +43,68 @@
         <result column="smd_properties" property="properties" typeHandler="JsonTypeHandler"/>
         <result column="smd_create_time" property="createTime"/>
         <result column="smd_update_time" property="updateTime"/>
+
+        <association property="deviceBrand" resultMap="cn.cloudwiz.dalian.snmp.device.dao.DeviceBrandDao.Result"/>
     </resultMap>
 
     <select id="getEntityByKey" resultMap="Result">
         SELECT
         <include refid="Columns">
             <property name="alias" value="smd"/>
+        </include>,
+        <include refid="cn.cloudwiz.dalian.snmp.device.dao.DeviceBrandDao.Columns">
+            <property name="alias" value="sdb"/>
         </include>
         FROM snmp_monitor_device smd
+        LEFT JOIN snmp_device_brand sdb ON smd.smd_sdb_id = sdb.sdb_id
         WHERE smd.smd_id = #{key}
+    </select>
+
+    <select id="getListByBrand" resultMap="Result">
+        SELECT
+        <include refid="Columns">
+            <property name="alias" value="smd"/>
+        </include>,
+        <include refid="cn.cloudwiz.dalian.snmp.device.dao.DeviceBrandDao.Columns">
+            <property name="alias" value="sdb"/>
+        </include>
+        FROM snmp_monitor_device smd
+        LEFT JOIN snmp_device_brand sdb ON smd.smd_sdb_id = sdb.sdb_id
+        WHERE smd.smd_sdb_id = #{brandKey}
+    </select>
+
+    <select id="getCountByParams" resultType="long">
+        SELECT COUNT(smd.smd_id)
+        FROM snmp_monitor_device smd
+        LEFT JOIN snmp_device_brand sdb ON smd.smd_sdb_id = sdb.sdb_id
+        <if test="params != null">
+            <include refid="Params">
+                <property name="smdAlias" value="smd"/>
+                <property name="sdbAlias" value="sdb"/>
+            </include>
+        </if>
+    </select>
+
+    <select id="getListByParams" resultMap="Result">
+        SELECT
+        <include refid="Columns">
+            <property name="alias" value="smd"/>
+        </include>,
+        <include refid="cn.cloudwiz.dalian.snmp.device.dao.DeviceBrandDao.Columns">
+            <property name="alias" value="sdb"/>
+        </include>
+        FROM snmp_monitor_device smd
+        LEFT JOIN snmp_device_brand sdb ON smd.smd_sdb_id = sdb.sdb_id
+        <if test="params != null">
+            <include refid="Params">
+                <property name="smdAlias" value="smd"/>
+                <property name="sdbAlias" value="sdb"/>
+            </include>
+        </if>
+        ORDER BY smd.smd_sdb_id, smd.smd_create_time DESC
+        <if test="page != null and page.isPaged()">
+            LIMIT #{page.offset}, #{page.pageSize}
+        </if>
     </select>
 
     <insert id="insert" parameterType="DeviceEntity" useGeneratedKeys="true" keyProperty="primaryKey">
