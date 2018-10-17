@@ -22,7 +22,6 @@
     <modules>
         <module>snmp-api</module>
         <module>snmp-web</module>
-        <module>snmp-nms</module>
         <module>snmp-device</module>
         <module>snmp-exporter</module>
     </modules>
@@ -33,12 +32,6 @@
                 <groupId>cn.cloudwiz.dalian.snmp</groupId>
                 <artifactId>snmp-api</artifactId>
                 <version>1.0-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>cn.cloudwiz.dalian.snmp</groupId>
-                <artifactId>snmp-nms</artifactId>
-                <version>1.0-SNAPSHOT</version>
-                <scope>runtime</scope>
             </dependency>
             <dependency>
                 <groupId>cn.cloudwiz.dalian.snmp</groupId>

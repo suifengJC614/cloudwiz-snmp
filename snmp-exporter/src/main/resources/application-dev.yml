@@ -1,3 +1,6 @@
 logging:
   level:
     cn.cloudwiz.dalian.snmp: debug
+
+exporter:
+  auto-export-cron: 0 */1 * * * ?

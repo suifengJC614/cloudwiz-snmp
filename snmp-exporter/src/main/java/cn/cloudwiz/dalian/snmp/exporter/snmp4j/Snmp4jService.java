@@ -1,7 +1,7 @@
-package cn.cloudwiz.dalian.snmp.nms;
+package cn.cloudwiz.dalian.snmp.exporter.snmp4j;
 
 import cn.cloudwiz.dalian.snmp.api.device.*;
-import cn.cloudwiz.dalian.snmp.api.nms.*;
+import cn.cloudwiz.dalian.snmp.exporter.SnmpService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.snmp4j.*;
@@ -19,19 +19,21 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-public class Snmp4jManager implements SnmpManager {
+public class Snmp4jService implements SnmpService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Snmp4jManager.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Snmp4jService.class);
 
-    private static final String ADDRESS_TEMPLATE = "udp:%s/161";
+    private static final String ADDRESS_TEMPLATE = "udp:%s/%s";
 
     @Override
     public Map<String, String> get(MonitorDevice device, List<String> oids) throws IOException {
         Snmp snmp = null;
         try {
             snmp = createSnmp(device);
+
+            String address = String.format(ADDRESS_TEMPLATE, device.getAddress(), device.getPort());
             Target target = createTarget(device);
-            target.setAddress(GenericAddress.parse(String.format(ADDRESS_TEMPLATE, device.getAddress())));
+            target.setAddress(GenericAddress.parse(address));
             target.setRetries(5);
             target.setTimeout(1000);
 
@@ -42,9 +44,15 @@ public class Snmp4jManager implements SnmpManager {
             pdu.setType(PDU.GET);
 
             ResponseEvent responseEvent = snmp.send(pdu, target);
-            Address peerAddress = responseEvent.getPeerAddress();
             PDU response = responseEvent.getResponse();
-            return response.getVariableBindings().stream().collect(Collectors.toMap(
+            if(response == null){
+                return Collections.emptyMap();
+            }
+            Vector<? extends VariableBinding> bindings = response.getVariableBindings();
+            if(bindings == null){
+                return Collections.emptyMap();
+            }
+            return bindings.stream().collect(Collectors.toMap(
                     item -> item.getOid().toDottedString(),
                     item -> item.getVariable().toString()
             ));
@@ -62,8 +70,9 @@ public class Snmp4jManager implements SnmpManager {
         try {
             snmp = createSnmp(device);
 
+            String address = String.format(ADDRESS_TEMPLATE, device.getAddress(), device.getPort());
             Target target = createTarget(device);
-            target.setAddress(GenericAddress.parse(String.format(ADDRESS_TEMPLATE, device.getAddress())));
+            target.setAddress(GenericAddress.parse(address));
             target.setRetries(5);
             target.setTimeout(1000);
 
@@ -192,6 +201,5 @@ public class Snmp4jManager implements SnmpManager {
     private OID parsePrivacyType(PrivacyType privacyType) {
         return PrivDES.ID;
     }
-
 
 }
