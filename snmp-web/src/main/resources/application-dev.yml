@@ -7,7 +7,7 @@ spring:
 
 logging:
   level:
-    cn.cloudwiz.dalian.snmp: info
+    cn.cloudwiz.dalian.snmp: debug
 
 server:
   port: 8090

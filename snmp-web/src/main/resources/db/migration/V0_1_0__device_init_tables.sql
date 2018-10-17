@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS snmp_monitor_device(
 CREATE TABLE IF NOT EXISTS snmp_monitor_items(
   smi_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
   smi_sdb_id INT UNSIGNED NOT NULL COMMENT '设备品牌',
-  smd_sei_name VARCHAR(200) DEFAULT NULL COMMENT 'SNMP_EXPORTER实例名称',
+  smi_sei_name VARCHAR(200) DEFAULT NULL COMMENT 'SNMP_EXPORTER实例名称',
   smi_oid VARCHAR(200) NOT NULL COMMENT '监控项OID',
   smi_key VARCHAR(200) NOT NULL COMMENT '监控项键名',
   smi_value_unit VARCHAR(100) DEFAULT NULL COMMENT '值单位',
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS snmp_monitor_items(
   smi_update_time DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (smi_id),
   INDEX (smi_sdb_id),
-  INDEX (smd_sei_name)
+  INDEX (smi_sei_name)
 )ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8 COMMENT '监控项表';
 
 -- ------------------------------

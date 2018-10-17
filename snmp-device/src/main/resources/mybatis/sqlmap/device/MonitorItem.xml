@@ -6,7 +6,7 @@
     <sql id="Columns">
         ${alias}.smi_id,
         ${alias}.smi_sdb_id,
-        ${alias}.smd_sei_name,
+        ${alias}.smi_sei_name,
         ${alias}.smi_oid,
         ${alias}.smi_key,
         ${alias}.smi_value_unit,
@@ -15,24 +15,39 @@
         ${alias}.smi_update_time
     </sql>
 
+    <sql id="Params">
+        <where>
+            <if test="params.exporterName != null">
+                AND ${smiAlias}.smi_sei_name LIKE CONCAT('%',#{params.exporterName},'%')
+            </if>
+            <if test="params.brandKey != null">AND ${smiAlias}.smi_sdb_id = #{params.brandKey}</if>
+        </where>
+    </sql>
+
     <resultMap id="Result" type="MonitorItemEntity">
         <id column="smi_id" property="primaryKey"/>
         <result column="smi_sdb_id" property="brandKey"/>
-        <result column="smd_sei_name" property="exporterName"/>
+        <result column="smi_sei_name" property="exporterName"/>
         <result column="smi_oid" property="oid"/>
         <result column="smi_key" property="saveKey"/>
         <result column="smi_value_unit" property="valueUnit"/>
         <result column="smi_value_type" property="valueType" typeHandler="EnumIntegerCodeTypeHandler"/>
         <result column="smi_create_time" property="createTime"/>
         <result column="smi_update_time" property="updateTime"/>
+
+        <association property="deviceBrand" resultMap="cn.cloudwiz.dalian.snmp.device.dao.DeviceBrandDao.Result"/>
     </resultMap>
 
     <select id="getEntityByKey" resultMap="Result">
         SELECT
         <include refid="Columns">
             <property name="alias" value="smi"/>
+        </include>,
+        <include refid="cn.cloudwiz.dalian.snmp.device.dao.DeviceBrandDao.Columns">
+            <property name="alias" value="sdb"/>
         </include>
         FROM snmp_monitor_items smi
+        LEFT JOIN snmp_device_brand sdb ON sdb.sdb_id = smi.smi_sdb_id
         WHERE smi.smi_id = #{key}
     </select>
 
@@ -40,9 +55,47 @@
         SELECT
         <include refid="Columns">
             <property name="alias" value="smi"/>
+        </include>,
+        <include refid="cn.cloudwiz.dalian.snmp.device.dao.DeviceBrandDao.Columns">
+            <property name="alias" value="sdb"/>
         </include>
         FROM snmp_monitor_items smi
+        LEFT JOIN snmp_device_brand sdb ON sdb.sdb_id = smi.smi_sdb_id
         WHERE smi.smi_sdb_id = #{brandKey}
+    </select>
+
+    <select id="getCountByParams" resultType="long">
+        SELECT COUNT(smi.smi_id)
+        FROM snmp_monitor_items smi
+        LEFT JOIN snmp_device_brand sdb ON sdb.sdb_id = smi.smi_sdb_id
+        <if test="params != null">
+            <include refid="Params">
+                <property name="smiAlias" value="smi"/>
+                <property name="sdbAlias" value="sdb"/>
+            </include>
+        </if>
+    </select>
+
+    <select id="getListByParams" resultMap="Result">
+        SELECT
+        <include refid="Columns">
+            <property name="alias" value="smi"/>
+        </include>,
+        <include refid="cn.cloudwiz.dalian.snmp.device.dao.DeviceBrandDao.Columns">
+            <property name="alias" value="sdb"/>
+        </include>
+        FROM snmp_monitor_items smi
+        LEFT JOIN snmp_device_brand sdb ON sdb.sdb_id = smi.smi_sdb_id
+        <if test="params != null">
+            <include refid="Params">
+                <property name="smiAlias" value="smi"/>
+                <property name="sdbAlias" value="sdb"/>
+            </include>
+        </if>
+        ORDER BY smi.smi_sdb_id, smi.smi_create_time DESC
+        <if test="page != null and page.isPaged()">
+            LIMIT #{page.offset}, #{page.pageSize}
+        </if>
     </select>
 
     <insert id="insert" parameterType="MonitorItemEntity" useGeneratedKeys="true" keyProperty="primaryKey">
@@ -51,7 +104,7 @@
             smi_sdb_id,
             smi_oid,
             smi_key,
-            <if test="exporterName != null">smd_sei_name,</if>
+            <if test="exporterName != null">smi_sei_name,</if>
             <if test="valueUnit != null">smi_value_unit,</if>
             <if test="valueType != null">smi_value_type,</if>
         </trim>
@@ -70,7 +123,7 @@
         <set>
             <if test="oid != null">smi_oid=#{oid,jdbcType=VARCHAR},</if>
             <if test="saveKey != null">smi_key=#{saveKey,jdbcType=VARCHAR},</if>
-            <if test="exporterName != null">smd_sei_name=#{exporterName,jdbcType=VARCHAR},</if>
+            <if test="exporterName != null">smi_sei_name=#{exporterName,jdbcType=VARCHAR},</if>
             <if test="valueUnit != null">smi_value_unit=#{valueUnit,jdbcType=VARCHAR},</if>
             <if test="valueType != null">smi_value_type=#{valueType,typeHandler=EnumIntegerCodeTypeHandler},</if>
         </set>
