@@ -39,8 +39,8 @@ public class TestCMService {
 //        test.getCIByKey(1, 1, CIType.Device, "172.21.16.14_VM1614centos_device_ram0");
         // 获取多条CI数据
         Map<String,String> filters = new HashMap<>();
-        filters.put("ip", "192.196.1.3");//filters对应着attribute的键值对，全检索时filters赋空或null
-        test.searchCI(9, 1, CIType.Device, filters);
+//        filters.put("ip", "192.196.1.3");//filters对应着attribute的键值对，全检索时filters赋空或null
+        test.searchCI(9, 1, CIType.SNMPMonitor, filters);
         // 更新CI数据
 //        test.updateCI(9, 1, CIType.Device, "172.21.16.14_VM1614centos_device_ram0");
         // 创建CI数据
