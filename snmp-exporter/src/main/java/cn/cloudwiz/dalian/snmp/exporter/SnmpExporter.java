@@ -11,10 +11,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -30,6 +33,8 @@ public class SnmpExporter implements Runnable {
     private RemoteService remotebs;
     @Autowired
     private SnmpService snmpbs;
+    @Value("${exporter.enable-auto-export}")
+    private boolean enableExport;
 
     @Scheduled(cron = "${exporter.auto-export-cron}")
     public void autoExport() {
@@ -55,7 +60,14 @@ public class SnmpExporter implements Runnable {
                         return;
                     }
                     List<String> oids = items.stream().map(MonitorItem::getOid).collect(Collectors.toList());
-                    Map<String, String> result = snmpbs.get(device, oids);
+                    Map<String, String> result = new HashMap<>();
+                    for (String oid : oids) {
+                        Map<String, String> oidResult = snmpbs.get(device, Arrays.asList(oid));
+                        if(MapUtils.isNotEmpty(oidResult)){
+                            result.putAll(oidResult);
+                        }
+                    }
+                    System.out.println(result);
                     if (MapUtils.isEmpty(result)) {
                         LOGGER.warn(String.format("export snmp for device[%s] ignore, reason: snmp result is empty",
                                 device.getAddress()));
@@ -73,7 +85,8 @@ public class SnmpExporter implements Runnable {
                             item -> Double.parseDouble(item.getValue())
                     ));
                     remotebs.sendSnmpResult(device, items, sendResult);
-                } catch (IOException e) {
+                    LOGGER.info(String.format("export snmp for device[%s] success.", device.getAddress()));
+                } catch (Throwable e) {
                     LOGGER.warn(String.format("export snmp for device[%s] failed, reason: %s", device.getAddress(), e.getMessage()));
                 }
             });

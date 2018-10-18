@@ -4,6 +4,7 @@ import cn.cloudwiz.dalian.commons.utils.HttpClient;
 import cn.cloudwiz.dalian.commons.utils.HttpException;
 import cn.cloudwiz.dalian.commons.utils.JsonUtils;
 import cn.cloudwiz.dalian.snmp.api.device.CommunityDevice;
+import cn.cloudwiz.dalian.snmp.api.device.DeviceType;
 import cn.cloudwiz.dalian.snmp.api.device.MonitorDevice;
 import cn.cloudwiz.dalian.snmp.api.device.SnmpVersion;
 import cn.cloudwiz.dalian.snmp.api.device.oids.MonitorItem;
@@ -31,6 +32,7 @@ import java.nio.charset.Charset;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class SMDBRemoteService implements RemoteService {
@@ -82,7 +84,12 @@ public class SMDBRemoteService implements RemoteService {
         try {
             String respJson = client.post(config.getItemsPath(), itemBody, itemHeaders);
             RemoteResponse response = proxyFactory.createProjection(RemoteResponse.class, respJson);
-            return response.getMonitorItems(cmdbDevice.getBrand(), cmdbDevice.getNodeType());
+            Set<String> netType = Stream.of(DeviceType.values()).map(DeviceType::getCode).collect(Collectors.toSet());
+            String nodeType = cmdbDevice.getNodeType();
+            if(netType.contains(nodeType)){
+                nodeType = "NET_DEVICE";
+            }
+            return response.getMonitorItems(cmdbDevice.getBrand(), nodeType);
         } catch (HttpException e) {
             throw new IOException(e);
         }
@@ -94,7 +101,7 @@ public class SMDBRemoteService implements RemoteService {
         List<OpentsdbDataPoint> dps = items.stream().filter(item -> result.containsKey(item.getOid())).map(item -> {
             Map<String, String> tags = new HashMap<>();
             tags.put("org", Long.toString(config.getOrgKey()));
-            tags.put("host", device.getAddress());
+            tags.put("host", device.getDeviceName());
             OpentsdbDataPoint point = new OpentsdbDataPoint();
             String metricName = MetricName.createFullName(config.getOrgKey().toString(), config.getSysKey().toString(), item.getSaveKey());
             point.setMetric(metricName);
@@ -163,31 +170,9 @@ public class SMDBRemoteService implements RemoteService {
 
         @JsonPath("$.brand")
         public String getBrand();
-    }
 
-    public interface MockMonitorDevice extends CommunityDevice {
-
-        @Value("192.168.0.101")
-        public String getAddress();
-
-        @Value("161")
-        public Integer getPort();
-
-        @Value("VERSION_2C")
-        public SnmpVersion getVersion();
-
-        @Value("public")
-        public String getCommunity();
-
-    }
-
-    public interface MockMonitorItem extends MonitorItem {
-
-        @Value("1.3.6.1.2.1.1.5.0")
-        public String getOid();
-
-        @Value("net.if.out.errors")
-        public String getSaveKey();
+        @JsonPath("$.name")
+        public String getDeviceName();
     }
 
     @Override

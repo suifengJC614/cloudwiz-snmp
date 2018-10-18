@@ -7,7 +7,7 @@ snmp4j:
   timeout: 1000
 
 exporter:
-  auto-export-cron: 0/5 * * * * ?
+  auto-export-cron: 0 */1 * * * ?
 
 
 

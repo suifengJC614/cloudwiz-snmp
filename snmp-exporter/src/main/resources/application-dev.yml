@@ -2,6 +2,9 @@ logging:
   level:
     cn.cloudwiz.dalian.snmp: info
 
+exporter:
+  enable-auto-export: false
+
 remote-config:
   device-path: http://123.206.91.96:8080/_alertd/node_manager/node/ip?token=0f320e7db4a2d8ba0a3229753bf7c90d821479da
   items-path: http://123.206.91.96:8080/_cmdb/ci/1/1/search2
