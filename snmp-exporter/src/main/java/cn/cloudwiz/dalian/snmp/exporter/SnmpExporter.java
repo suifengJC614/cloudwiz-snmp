@@ -7,6 +7,7 @@ import cn.cloudwiz.dalian.snmp.api.device.MonitorDevice;
 import cn.cloudwiz.dalian.snmp.api.device.oids.MonitorItem;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,7 +61,18 @@ public class SnmpExporter implements Runnable {
                                 device.getAddress()));
                         return;
                     }
-                    remotebs.sendSnmpResult(device, items, result);
+                    Map<String, Number> sendResult = result.entrySet().parallelStream().filter(item -> {
+                        try {
+                            Double.parseDouble(item.getValue());
+                            return true;
+                        } catch (Exception e) {
+                            return false;
+                        }
+                    }).collect(Collectors.toMap(
+                            item -> item.getKey(),
+                            item -> Double.parseDouble(item.getValue())
+                    ));
+                    remotebs.sendSnmpResult(device, items, sendResult);
                 } catch (IOException e) {
                     LOGGER.warn(String.format("export snmp for device[%s] failed, reason: %s", device.getAddress(), e.getMessage()));
                 }

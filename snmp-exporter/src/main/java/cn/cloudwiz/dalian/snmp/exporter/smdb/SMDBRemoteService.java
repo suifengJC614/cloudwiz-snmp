@@ -7,6 +7,8 @@ import cn.cloudwiz.dalian.snmp.api.device.CommunityDevice;
 import cn.cloudwiz.dalian.snmp.api.device.MonitorDevice;
 import cn.cloudwiz.dalian.snmp.api.device.SnmpVersion;
 import cn.cloudwiz.dalian.snmp.api.device.oids.MonitorItem;
+import cn.cloudwiz.dalian.snmp.config.RemoteConfig;
+import cn.cloudwiz.dalian.snmp.config.TokenConfig;
 import cn.cloudwiz.dalian.snmp.exporter.RemoteService;
 import cn.cloudwiz.dalian.snmp.exporter.SnmpService;
 import com.cloudmon.alert.common.datamodel.MetricName;
@@ -14,6 +16,7 @@ import com.cloudmon.alert.common.exception.NoTokenFoundException;
 import com.cloudmon.alert.common.opentsdb.OpentsdbDataPoint;
 import com.cloudmon.alert.common.opentsdb.OpentsdbProxy;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.projection.ProjectionFactory;
@@ -34,16 +37,8 @@ public class SMDBRemoteService implements RemoteService {
 
     @Autowired
     private ProjectionFactory proxyFactory;
-
-    private String devicePath = "http://123.206.91.96:8080/_alertd/node_manager/node/ip?token=0f320e7db4a2d8ba0a3229753bf7c90d821479da";
-
-    private String itemPath = "http://123.206.91.96:8080/_cmdb/ci/1/1/search2";
-    private String tsdbPath = "http://123.206.91.96:8080/_tsdb";
-    private String tokenUsername = "CloudInsight";
-    private String tokenPassword = "Cloud";
-    private String tokenUrl = "jdbc:mysql://123.206.91.96:3308/grafana";
-    private Long orgKey = 1L;
-    private Long sysKey = 1L;
+    @Autowired
+    private RemoteConfig config;
     private Map<String, String> itemHeaders = new HashMap<>();
     private byte[] itemBody;
 
@@ -52,12 +47,13 @@ public class SMDBRemoteService implements RemoteService {
         Charset charset = Charset.forName("UTF-8");
         Properties properties = new Properties();
         // opentsdb
-        properties.setProperty("metrics_server_url", tsdbPath);//tsdb服务地址
-        byte[] encodeBase64 = Base64.encodeBase64(tokenPassword.getBytes(charset));
+        properties.setProperty("metrics_server_url", config.getTsdbPath());//tsdb服务地址
+        TokenConfig token = config.getToken();
+        byte[] encodeBase64 = Base64.encodeBase64(token.getPassword().getBytes(charset));
         String s = new String(encodeBase64);
-        properties.setProperty("mysql_username", tokenUsername);
+        properties.setProperty("mysql_username", token.getUsername());
         properties.setProperty("mysql_password", new String(encodeBase64));// 密码需要base64加密
-        properties.setProperty("mysql_url", tokenUrl);// OrgTokenMap.java中获取token需要检索的数据库
+        properties.setProperty("mysql_url", token.getUrl());// OrgTokenMap.java中获取token需要检索的数据库
         OpentsdbProxy.initInstance(properties);
 
         itemHeaders.put("Content-Type", "application/json");
@@ -70,7 +66,7 @@ public class SMDBRemoteService implements RemoteService {
     public List<? extends MonitorDevice> getMonitorDevices() throws IOException {
         HttpClient client = HttpClient.getHttpClient();
         try {
-            String respJson = client.get(devicePath);
+            String respJson = client.get(config.getDevicePath());
             RemoteResponse response = proxyFactory.createProjection(RemoteResponse.class, respJson);
             return response.getMonitorDevices();
         } catch (HttpException e) {
@@ -84,7 +80,7 @@ public class SMDBRemoteService implements RemoteService {
         CMDBMonitorDevice cmdbDevice = (CMDBMonitorDevice) device;
         HttpClient client = HttpClient.getHttpClient();
         try {
-            String respJson = client.post(itemPath, itemBody, itemHeaders);
+            String respJson = client.post(config.getItemsPath(), itemBody, itemHeaders);
             RemoteResponse response = proxyFactory.createProjection(RemoteResponse.class, respJson);
             return response.getMonitorItems(cmdbDevice.getBrand(), cmdbDevice.getNodeType());
         } catch (HttpException e) {
@@ -93,25 +89,26 @@ public class SMDBRemoteService implements RemoteService {
     }
 
     @Override
-    public void sendSnmpResult(MonitorDevice device, List<? extends MonitorItem> items, Map<String, String> result) throws IOException {
+    public void sendSnmpResult(MonitorDevice device, List<? extends MonitorItem> items, Map<String, Number> result) throws IOException {
         OpentsdbProxy tsdb = OpentsdbProxy.getInstance();
         List<OpentsdbDataPoint> dps = items.stream().filter(item -> result.containsKey(item.getOid())).map(item -> {
             Map<String, String> tags = new HashMap<>();
-            tags.put("org", Long.toString(orgKey));
+            tags.put("org", Long.toString(config.getOrgKey()));
             tags.put("host", device.getAddress());
-
             OpentsdbDataPoint point = new OpentsdbDataPoint();
-            String metricName = MetricName.createFullName(orgKey.toString(), sysKey.toString(), item.getSaveKey());
+            String metricName = MetricName.createFullName(config.getOrgKey().toString(), config.getSysKey().toString(), item.getSaveKey());
             point.setMetric(metricName);
             point.setTags(tags);
             point.setTimestamp(System.currentTimeMillis() / 1000);
+            point.setValue(result.get(item.getOid()).doubleValue());
             return point;
         }).collect(Collectors.toList());
-
-        try {
-            tsdb.write(dps);
-        } catch (Exception e) {
-            throw new IOException(e);
+        if(CollectionUtils.isNotEmpty(dps)){
+            try {
+                tsdb.write(dps);
+            } catch (Exception e) {
+                throw new IOException(e);
+            }
         }
     }
 

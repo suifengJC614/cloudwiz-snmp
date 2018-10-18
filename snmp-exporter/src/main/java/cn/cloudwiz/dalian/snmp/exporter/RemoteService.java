@@ -13,7 +13,7 @@ public interface RemoteService {
 
     public List<? extends MonitorItem> getMonitorItem(MonitorDevice device) throws IOException;
 
-    public void sendSnmpResult(MonitorDevice device, List<? extends MonitorItem> items, Map<String, String> result) throws IOException;
+    public void sendSnmpResult(MonitorDevice device, List<? extends MonitorItem> items, Map<String, Number> result) throws IOException;
 
     public boolean isPause();
 

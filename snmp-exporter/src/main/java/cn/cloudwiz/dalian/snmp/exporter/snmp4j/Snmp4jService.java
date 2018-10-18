@@ -1,6 +1,7 @@
 package cn.cloudwiz.dalian.snmp.exporter.snmp4j;
 
 import cn.cloudwiz.dalian.snmp.api.device.*;
+import cn.cloudwiz.dalian.snmp.config.SnmpConfig;
 import cn.cloudwiz.dalian.snmp.exporter.SnmpService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +12,7 @@ import org.snmp4j.mp.SnmpConstants;
 import org.snmp4j.security.*;
 import org.snmp4j.smi.*;
 import org.snmp4j.transport.DefaultUdpTransportMapping;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -25,6 +27,9 @@ public class Snmp4jService implements SnmpService {
 
     private static final String ADDRESS_TEMPLATE = "udp:%s/%s";
 
+    @Autowired
+    private SnmpConfig config;
+
     @Override
     public Map<String, String> get(MonitorDevice device, List<String> oids) throws IOException {
         Snmp snmp = null;
@@ -34,8 +39,8 @@ public class Snmp4jService implements SnmpService {
             String address = String.format(ADDRESS_TEMPLATE, device.getAddress(), device.getPort());
             Target target = createTarget(device);
             target.setAddress(GenericAddress.parse(address));
-            target.setRetries(5);
-            target.setTimeout(1000);
+            target.setRetries(config.getRetries());
+            target.setTimeout(config.getTimeout());
 
             PDU pdu = createPDU(device.getVersion());
             oids.parallelStream().forEach(oid -> {
@@ -73,8 +78,8 @@ public class Snmp4jService implements SnmpService {
             String address = String.format(ADDRESS_TEMPLATE, device.getAddress(), device.getPort());
             Target target = createTarget(device);
             target.setAddress(GenericAddress.parse(address));
-            target.setRetries(5);
-            target.setTimeout(1000);
+            target.setRetries(config.getRetries());
+            target.setTimeout(config.getTimeout());
 
             Map<String, String> result = new HashMap<>();
             for (String oid : oids) {
@@ -131,6 +136,7 @@ public class Snmp4jService implements SnmpService {
         return false;
     }
 
+    @SuppressWarnings("unchecked")
     protected Snmp createSnmp(MonitorDevice device) throws IOException {
         TransportMapping transport = new DefaultUdpTransportMapping();
         Snmp snmp = new Snmp(transport);

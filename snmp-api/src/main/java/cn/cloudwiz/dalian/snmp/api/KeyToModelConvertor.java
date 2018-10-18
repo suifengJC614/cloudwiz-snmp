@@ -11,6 +11,7 @@ import java.util.Map;
 public class KeyToModelConvertor implements ProjectionConverter {
 
     @Override
+    @SuppressWarnings("unchecked")
     public <T> T convert(Method method, Class<T> returnType, Object origin) {
         Map<String, Object> datas = new HashMap<>();
         datas.put("key", ((Number) origin).longValue());

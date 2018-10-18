@@ -10,6 +10,7 @@ import java.util.Objects;
 @Component
 public class NumToEnumTypeConvertor implements ProjectionConverter {
     @Override
+    @SuppressWarnings("unchecked")
     public <T> T convert(Method method, Class<T> returnType, Object origin) {
         int value = ((Number) origin).intValue();
         for (T item : returnType.getEnumConstants()) {

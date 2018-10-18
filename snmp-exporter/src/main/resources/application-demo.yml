@@ -1,6 +1,10 @@
 logging:
   level:
     cn.cloudwiz.dalian.snmp: info
+  file: ./logs/snmp-demo.log
+
+exporter:
+  auto-export-cron: 0 */1 * * * ?
 
 remote-config:
   device-path: http://123.206.91.96:8080/_alertd/node_manager/node/ip?token=0f320e7db4a2d8ba0a3229753bf7c90d821479da
